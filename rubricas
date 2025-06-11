@@ -15,19 +15,24 @@ def carregar_rubricas(rubricas_texto):
 st.title("Classificador de Rubricas Contábeis")
 
 folha_file = st.file_uploader("Upload Folha CSV", type=["csv"])
-rubricas_file = st.file_uploader("Upload Rubricas CSV", type=["csv", "txt"])
+rubricas_file = st.file_uploader("Upload Rubricas TXT", type=["txt"])
 
 if folha_file and rubricas_file:
-    folha_df = pd.read_csv(folha_file, sep=';', encoding='utf-8')
-    # Ajusta o valor para float (troca ponto e vírgula)
-    folha_df['VALOR'] = folha_df['VALOR'].str.replace('.', '', regex=False).str.replace(',', '.', regex=False).astype(float)
+    try:
+        folha_df = pd.read_csv(folha_file, sep=';', encoding='utf-8')
+        # Convertendo valor para float, tratando vírgulas e pontos
+        folha_df['VALOR'] = folha_df['VALOR'].str.replace('.', '', regex=False).str.replace(',', '.', regex=False)
+        folha_df['VALOR'] = pd.to_numeric(folha_df['VALOR'], errors='coerce')
 
-    rubricas_texto = rubricas_file.getvalue().decode("utf-8")
-    grupos = carregar_rubricas(rubricas_texto)
+        rubricas_texto = rubricas_file.getvalue().decode("utf-8")
+        grupos = carregar_rubricas(rubricas_texto)
 
-    folha_df['GRUPO'] = folha_df['COD'].astype(str).map(grupos).fillna('NÃO CLASSIFICADO')
+        folha_df['COD'] = folha_df['COD'].astype(str)
+        folha_df['GRUPO'] = folha_df['COD'].map(grupos).fillna('NÃO CLASSIFICADO')
 
-    resultado = folha_df.groupby('GRUPO')['VALOR'].sum().reset_index().sort_values(by='VALOR', ascending=False)
+        resultado = folha_df.groupby('GRUPO')['VALOR'].sum().reset_index().sort_values(by='VALOR', ascending=False)
 
-    st.subheader("Resultado da Classificação")
-    st.dataframe(resultado)
+        st.subheader("Resultado da Classificação")
+        st.dataframe(resultado)
+    except Exception as e:
+        st.error(f"Erro ao processar os arquivos: {e}")
