@@ -1,3 +1,5 @@
+import streamlit as st
+
 def substituir_codigos_por_valores(texto_com_codigos, dados_string):
     """
     Substitui códigos numéricos em um dado texto pelas suas descrições
@@ -23,16 +25,17 @@ def substituir_codigos_por_valores(texto_com_codigos, dados_string):
         linhas = linhas[1:]
 
     for linha in linhas:
-        partes = linha.split(';')
-        if len(partes) == 4:
-            codigo = partes[0].strip()
-            descricao = partes[2].strip()
-            valor = partes[3].strip() # Mantém o valor como string para substituição direta
+        parts = linha.split(';')
+        if len(parts) == 4:
+            codigo = parts[0].strip()
+            descricao = parts[2].strip()
+            valor = parts[3].strip() # Mantém o valor como string para substituição direta
             
             # Armazena a descrição e o valor combinados
             mapa_codigos[codigo] = f"{descricao} ({valor})"
         else:
-            print(f"Aviso: Ignorando linha de dados malformada: {linha}")
+            # Em Streamlit, é melhor usar st.warning ou st.error para mensagens de erro
+            st.warning(f"Aviso: Ignorando linha de dados malformada: {linha}")
             continue
 
     # Itera sobre o mapa_codigos e substitui as ocorrências no texto
@@ -50,8 +53,9 @@ def substituir_codigos_por_valores(texto_com_codigos, dados_string):
             
     return texto_substituido
 
-# --- Seus Dados ---
-# Estes são os dados que você forneceu, formatados como uma string multi-linha.
+# --- Seus Dados Originais de Folha de Pagamento ---
+# Estes são os dados que você forneceu inicialmente para mapeamento.
+# Eles podem ser mantidos aqui ou lidos de um arquivo em uma aplicação mais complexa.
 dados_folha_pagamento = """COD;TIPO;DES;VALOR
 1;P;Horas Normais;175.851,23
 3;P;Horas DSR;165,60
@@ -82,7 +86,7 @@ dados_folha_pagamento = """COD;TIPO;DES;VALOR
 404;P;Média H. E. s/ Aviso Prévio Ind.;353,68
 407;P;Média Val. Variáveis s/ 13º Salário;180,76
 408;P;Média Val. Variáveis s/ 13º Salário I;60,25
-409;P;Média Val. Variáveis s/ Férias;1.670,46
+409;P;Média Val. Variáveis s/ Férias;1.670.46
 410;P;Média Val. Variáveis s/ Férias Prop;392,13
 413;P;Média Val. Variáveis s/ Aviso Prévi;515,23
 420;P;Média Adicionais s/ 13º Salário Pro;68,05
@@ -119,19 +123,49 @@ dados_folha_pagamento = """COD;TIPO;DES;VALOR
 2000;D;Auxílio-Educação;599,70
 """
 
-# --- Exemplo de Uso ---
-# Você pode substituir o 'texto_exemplo' abaixo por qualquer texto onde você deseja
-# que os códigos sejam substituídos.
-texto_exemplo = """
-As horas normais do funcionário são representadas pelo código 1.
-Além disso, eles receberam comissões sob o código 14.
-Houve um desconto de INSS, código 104, e também de Vale Transporte, código 1049.
-O total de horas de férias está sob o código 7.
-Tenha cuidado com códigos como 1 e 104, bem como 1995.
+# --- Configuração da Aplicação Streamlit ---
+st.set_page_config(layout="centered", page_title="Substituidor de Códigos")
+
+st.title("📝 Ferramenta de Substituição de Códigos")
+
+st.write("Insira o texto que contém os códigos que deseja substituir. Os códigos serão substituídos pelas descrições e valores correspondentes da sua lista de dados.")
+
+# Área de entrada para o texto com códigos
+texto_de_entrada = st.text_area(
+    "Cole o seu texto aqui:",
+    height=300,
+    value="""
+400019;200102;400016;200038;400007;400018;40019201;400005;400191;400021;400013;400013;400006;100043;200038;200056;400019;400007;400180;400177;200034;200027;100042;200031;400181;
+DESP. SALARIOS ; DESP. FÉRIAS ; HORAS EXTRAS ; SALA FAMILIA ;AVISO PRVIO IND; AD. INSALUBRIDADE ; AD. PERICUL. ; AD. NOTURNO ; BIENIO ; PRO LABORE ; GRATIFICAÇÃO ; PREMIOS ; AJUDA DE CUSTO ; DESC. ADTO FÉRIAS ; INSS ; IRRF ; DESC. SALARIOS ;AVISO PRVIO IND; ALIMENTAÇÃO ; PLANO SAUDE ; PENSÃO ALIM. ; DESC. ADTO 13° ; DESC. ADTO SAL ; LIQ. RESCIS. ; VT ;
+1;7;26;124;16;63;;1.025;154;169;;1.996;1.995;54;76;108;77;;4.452;91;71;;1.981;182;1.049; TOTAL DESC. 
+3;17;33;;51;64;;;;;;;;;104;110;2.000;;;;;;;;;
+9;23;;;52;70;;;;;;;;;105;;544;;;;;;;;;
+14;43;;;398;;;;;;;;;;380;;;;;;;;;;;
+185;45;;;399;;;;;;;;;;;;;;;;;;;;;
+170;374;;;401;;;;;;;;;;;;;;;;;;;;;
+;375;;;404;;;;;;;;;;;;;;;;;;;;;
+;400;;;407;;;;;;;;;;;;;;;;;;;;;
+;409;;;408;;;;;;;;;;;;;;;;;;;;;
+;410;;;413;;;;;;;;;;;;;;;;;;;;;
+;422;;;420;;;;;;;;;;;;;;;;;;;;;
+;423;;;421;;;;;;;;;;;;;;;;;;;;;
+;633;;;426;;;;;;;;;;;;;;;;;;;;;
+;637;;;523;;;;;;;;;;;;;;;;;;;;;
+;638;;;;;;;;;;;;;;;;;;;;;;;;
+;651;;;;;;;;;;;;;;;;;;;;;;;;
+;652;;;;;;;;;;;;;;;;;;;;;;;;
 """
+)
 
-# Realiza a substituição
-texto_resultante = substituir_codigos_por_valores(texto_exemplo, dados_folha_pagamento)
+if st.button("Substituir Códigos"):
+    if texto_de_entrada:
+        texto_resultante = substituir_codigos_por_valores(texto_de_entrada, dados_folha_pagamento)
+        st.subheader("Texto com Códigos Substituídos:")
+        st.code(texto_resultante, language='text')
+    else:
+        st.warning("Por favor, insira algum texto para realizar a substituição.")
 
-# Imprime o resultado
-print(texto_resultante)
+st.markdown("---")
+st.markdown("### ℹ️ Como Funciona?")
+st.write("Este aplicativo usa uma lista predefinida de códigos de folha de pagamento para substituir os códigos numéricos no seu texto pelas suas descrições e valores correspondentes. Por exemplo, '1' torna-se 'Horas Normais (175.851,23)'.")
+st.write("Os códigos que não estão na lista predefinida permanecerão inalterados.")
