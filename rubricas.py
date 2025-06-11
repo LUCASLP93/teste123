@@ -19,12 +19,11 @@ rubricas_file = st.file_uploader("Upload Rubricas TXT", type=["txt"])
 
 if folha_file and rubricas_file:
     try:
-        folha_df = pd.read_csv(folha_file, sep=';', encoding='utf-8')
-        # Convertendo valor para float, tratando vírgulas e pontos
+        folha_df = pd.read_csv(folha_file, sep=';', encoding='latin1')
         folha_df['VALOR'] = folha_df['VALOR'].str.replace('.', '', regex=False).str.replace(',', '.', regex=False)
         folha_df['VALOR'] = pd.to_numeric(folha_df['VALOR'], errors='coerce')
 
-        rubricas_texto = rubricas_file.getvalue().decode("utf-8")
+        rubricas_texto = rubricas_file.getvalue().decode("latin1")
         grupos = carregar_rubricas(rubricas_texto)
 
         folha_df['COD'] = folha_df['COD'].astype(str)
